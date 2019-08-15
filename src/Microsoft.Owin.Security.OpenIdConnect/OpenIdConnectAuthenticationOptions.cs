@@ -73,7 +73,7 @@ namespace Microsoft.Owin.Security.OpenIdConnect
         /// An optional constrained path on which to process the authentication callback.
         /// If not provided and RedirectUri is available, this value will be generated from RedirectUri.
         /// </summary>
-        /// <remarks>If you set this value, then the <see cref="OpenIdConnectAuthenticationHandler"/> will only listen for posts at this address. 
+        /// <remarks>If you set this value, then the <see cref="OpenIdConnectAuthenticationHandler"/> will only listen for posts at this address.
         /// If the IdentityProvider does not post to this address, you may end up in a 401 -> IdentityProvider -> Client -> 401 -> ...</remarks>
         public PathString CallbackPath { get; set; }
 
@@ -127,7 +127,7 @@ namespace Microsoft.Owin.Security.OpenIdConnect
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="SecurityTokenHandlerCollection"/> of <see cref="SecurityTokenHandler"/>s used to read and validate <see cref="SecurityToken"/>s. 
+        /// Gets or sets the <see cref="SecurityTokenHandlerCollection"/> of <see cref="SecurityTokenHandler"/>s used to read and validate <see cref="SecurityToken"/>s.
         /// </summary>
         /// <exception cref="ArgumentNullException">if 'value' is null.</exception>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "By Design")]
@@ -138,7 +138,7 @@ namespace Microsoft.Owin.Security.OpenIdConnect
             {
                 return _securityTokenHandlers;
             }
-            
+
             set
             {
                 if (value == null)
@@ -190,7 +190,7 @@ namespace Microsoft.Owin.Security.OpenIdConnect
 
         /// <summary>
         /// Gets or sets the <see cref="OpenIdConnectProtocolValidator"/> that is used ensure the 'id_token' received
-        /// is valid per: http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation 
+        /// is valid per: http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation
         /// </summary>
         /// <exception cref="ArgumentNullException">if 'value' is null.</exception>
         public OpenIdConnectProtocolValidator ProtocolValidator
@@ -233,6 +233,11 @@ namespace Microsoft.Owin.Security.OpenIdConnect
         /// Gets or sets the 'response_type'.
         /// </summary>
         public string ResponseType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the 'response_mode'.
+        /// </summary>
+        public string ResponseMode { get; set; }
 
         /// <summary>
         /// Gets or sets the 'scope'.

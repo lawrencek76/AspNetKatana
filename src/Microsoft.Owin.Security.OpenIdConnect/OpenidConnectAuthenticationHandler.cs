@@ -145,11 +145,19 @@ namespace Microsoft.Owin.Security.OpenIdConnect
                     RedirectUri = Options.RedirectUri,
                     RequestType = OpenIdConnectRequestType.AuthenticationRequest,
                     Resource = Options.Resource,
-                    ResponseMode = OpenIdConnectResponseModes.FormPost,
                     ResponseType = Options.ResponseType,
                     Scope = Options.Scope,
                     State = OpenIdConnectAuthenticationDefaults.AuthenticationPropertiesKey + "=" + Uri.EscapeDataString(Options.StateDataFormat.Protect(properties)),
                 };
+
+                // Omitting the response_mode parameter when it already corresponds to the default
+                // response_mode used for the specified response_type is recommended by the specifications.
+                // See http://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#ResponseModes
+                if (!string.Equals(Options.ResponseType, "code", StringComparison.Ordinal) ||
+                    !string.Equals(Options.ResponseMode, OpenIdConnectResponseModes.Query, StringComparison.Ordinal))
+                {
+                    openIdConnectMessage.ResponseMode = Options.ResponseMode;
+                }
 
                 if (Options.ProtocolValidator.RequireNonce)
                 {
@@ -191,10 +199,23 @@ namespace Microsoft.Owin.Security.OpenIdConnect
 
             OpenIdConnectMessage openIdConnectMessage = null;
 
+            if (string.Equals(Request.Method, "GET", StringComparison.OrdinalIgnoreCase))
+            {
+                openIdConnectMessage = new OpenIdConnectMessage(Request.Query);
+                // response_mode=query (explicit or not) and a response_type containing id_token
+                // or token are not considered as a safe combination and MUST be rejected.
+                // See http://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#Security
+                if (!string.IsNullOrWhiteSpace(openIdConnectMessage.IdToken) || !string.IsNullOrWhiteSpace(openIdConnectMessage.Token))
+                {
+                    _logger.WriteError("An OpenID Connect response cannot contain an identity token " +
+                                    "or an access token when using response_mode=query");
+                    return null;
+                }
+            }
             // assumption: if the ContentType is "application/x-www-form-urlencoded" it should be safe to read as it is small.
-            if (string.Equals(Request.Method, "POST", StringComparison.OrdinalIgnoreCase)
+            else if (string.Equals(Request.Method, "POST", StringComparison.OrdinalIgnoreCase)
               && !string.IsNullOrWhiteSpace(Request.ContentType)
-                // May have media/type; charset=utf-8, allow partial match.
+              // May have media/type; charset=utf-8, allow partial match.
               && Request.ContentType.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
               && Request.Body.CanRead)
             {
@@ -427,7 +448,7 @@ namespace Microsoft.Owin.Security.OpenIdConnect
         /// Sets <see cref="OpenIdConnectMessage.Nonce"/> to <see cref="Options.ProtocolValidator.GenerateNonce"/>.
         /// </summary>
         /// <param name="message">the <see cref="OpenIdConnectMessage"/> being processed.</param>
-        /// <remarks>Calls <see cref="RememberNonce"/> to add the nonce to a protected cookie. 
+        /// <remarks>Calls <see cref="RememberNonce"/> to add the nonce to a protected cookie.
         protected virtual void AddNonceToMessage(OpenIdConnectMessage message)
         {
             if (message == null)
@@ -543,7 +564,7 @@ namespace Microsoft.Owin.Security.OpenIdConnect
                 return OpenIdConnectAuthenticationDefaults.CookiePrefix + OpenIdConnectAuthenticationDefaults.Nonce + Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(nonce)));
             }
         }
- 
+
         private AuthenticationProperties GetPropertiesFromState(string state)
         {
             // assume a well formed query string: <a=b&>OpenIdConnectAuthenticationDefaults.AuthenticationPropertiesKey=kasjd;fljasldkjflksdj<&c=d>
